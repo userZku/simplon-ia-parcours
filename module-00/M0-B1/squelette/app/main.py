@@ -17,11 +17,13 @@ from __future__ import annotations
 
 from contextlib import asynccontextmanager
 from pathlib import Path
+from time import perf_counter
 from typing import Any
 
 import joblib
 from fastapi import FastAPI, HTTPException
 from loguru import logger
+from pandas import DataFrame
 
 from app.schemas import HealthResponse, MachineInput, PredictionResponse
 
@@ -104,10 +106,39 @@ def predict(item: MachineInput) -> PredictionResponse:
     Returns:
         PredictionResponse avec la classe prédite et les probabilités.
     """
-    raise HTTPException(
-        status_code=501,
-        detail=(
-            "Endpoint /predict à implémenter — voir TODO dans app/main.py "
-            "et le mini-cours 01_FastAPI_essentiel.md."
-        ),
-    )
+    start = perf_counter()
+    model = state.get("model")
+    if model is None:
+        raise HTTPException(status_code=503, detail="Modèle non chargé")
+
+    try:
+        # Une ligne d'entrée pour respecter le format attendu par scikit-learn.
+        df = DataFrame([item.model_dump()])
+        class_pred = model.predict(df)[0]
+        proba = model.predict_proba(df)[0]
+        classes = model.classes_
+        proba_dict = {str(label): float(score) for label, score in zip(classes, proba)}
+
+        response = PredictionResponse(
+            criticite=str(class_pred),
+            probabilites=proba_dict,
+        )
+
+        elapsed_ms = (perf_counter() - start) * 1000
+        logger.info(
+            "Prediction ok | input={} | predicted_class={} | latency_ms={:.2f}",
+            item.model_dump(),
+            class_pred,
+            elapsed_ms,
+        )
+        return response
+    except HTTPException:
+        raise
+    except Exception:
+        elapsed_ms = (perf_counter() - start) * 1000
+        logger.exception(
+            "Prediction failed | input={} | latency_ms={:.2f}",
+            item.model_dump(),
+            elapsed_ms,
+        )
+        raise HTTPException(status_code=500, detail="Erreur interne lors de la prédiction")
