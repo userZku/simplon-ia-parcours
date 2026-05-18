@@ -18,7 +18,9 @@ from __future__ import annotations
 from contextlib import asynccontextmanager
 from pathlib import Path
 from time import perf_counter
+import os
 from typing import Any
+
 
 import joblib
 from fastapi import FastAPI, HTTPException
@@ -27,7 +29,25 @@ from pandas import DataFrame
 
 from app.schemas import HealthResponse, MachineInput, PredictionResponse
 
+
 MODEL_PATH = Path(__file__).resolve().parents[1] / "model" / "model.joblib"
+LOGS_DIR = Path(__file__).resolve().parents[1] / "logs"
+LOGS_DIR.mkdir(parents=True, exist_ok=True)
+LOG_FILE = LOGS_DIR / "api.log"
+
+# Configuration Loguru : fichier + console
+logger.remove()
+logger.add(
+    str(LOG_FILE),
+    rotation="5 MB",
+    retention="7 days",
+    compression="zip",
+    level="INFO",
+    enqueue=True,
+    backtrace=True,
+    diagnose=True,
+)
+logger.add(lambda msg: print(msg, end=""), colorize=True, level="INFO")
 
 # Mémoire d'application — peuplée par le lifespan
 state: dict[str, Any] = {}
@@ -106,6 +126,7 @@ def predict(item: MachineInput) -> PredictionResponse:
     Returns:
         PredictionResponse avec la classe prédite et les probabilités.
     """
+    logger.info("/predict - payload reçu: {}", item.model_dump())
     start = perf_counter()
     model = state.get("model")
     if model is None:
@@ -126,8 +147,7 @@ def predict(item: MachineInput) -> PredictionResponse:
 
         elapsed_ms = (perf_counter() - start) * 1000
         logger.info(
-            "Prediction ok | input={} | predicted_class={} | latency_ms={:.2f}",
-            item.model_dump(),
+            "/predict - prédiction: {} | durée: {:.2f} ms",
             class_pred,
             elapsed_ms,
         )
@@ -137,8 +157,7 @@ def predict(item: MachineInput) -> PredictionResponse:
     except Exception:
         elapsed_ms = (perf_counter() - start) * 1000
         logger.exception(
-            "Prediction failed | input={} | latency_ms={:.2f}",
-            item.model_dump(),
+            "/predict - erreur | durée: {:.2f} ms",
             elapsed_ms,
         )
         raise HTTPException(status_code=500, detail="Erreur interne lors de la prédiction")
