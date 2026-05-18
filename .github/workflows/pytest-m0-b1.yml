@@ -1,0 +1,24 @@
+name: M0-B1 Pytest CI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "module-00/M0-B1/squelette/**"
+      - ".github/workflows/pytest-m0-b1.yml"
+      - ".github/workflows/_python-pytest-reusable.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "module-00/M0-B1/squelette/**"
+      - ".github/workflows/pytest-m0-b1.yml"
+      - ".github/workflows/_python-pytest-reusable.yml"
+
+jobs:
+  test:
+    uses: ./.github/workflows/_python-pytest-reusable.yml
+    with:
+      job-name: M0-B1 tests
+      working-directory: module-00/M0-B1/squelette
+      python-version: "3.11"
+      pytest-command: pytest -q
