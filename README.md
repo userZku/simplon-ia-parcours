@@ -9,11 +9,14 @@ Parcours de formation complet en Intelligence Artificielle couvrant les fondamen
 
 ## 📋 Table des matières
 
-- [Module 00 — Fondamentaux ML & Intégration](#module-00--fondamentaux-ml--intégration)
-  - [M0-B1 — FastIA : API de Prédiction](#m0-b1--fastia-api-de-prédiction)
-  - [M0-B2 — NLP Multi-Services](#m0-b2--nlp-multi-services) *(à compléter)*
-- [Autres Modules](#autres-modules) *(à venir)*
+- [Module 00 — Fondamentaux ML & Intégration](#module-00-fondamentaux-ml-intégration)
+  - [M0-B1 — FastIA : API de Prédiction](#m0-b1-fastia-api-de-prédiction)
+  - [M0-B2 — NLP Multi-Services](#m0-b2-nlp-multi-services)
+- [Autres Modules](#autres-modules)
 - [Installation Rapide](#installation-rapide)
+- [Structure du Repo](#structure-du-repo)
+- [CI/CD](#cicd)
+- [Notes](#notes)
 
 ---
 
@@ -115,7 +118,42 @@ Chaque module possède son propre `squelette/` avec :
 
 ---
 
-## 🔗 CI/CD
+## � Structure du Repo
+
+```
+simplon-ia-parcours/
+├── README.md                          ← (ce fichier)
+├── .github/
+│   └── workflows/
+│       ├── _python-pytest-reusable.yml
+│       └── pytest-m0-b1.yml
+├── module-00/
+│   ├── M0-B1/
+│   │   ├── ressources/
+│   │   │   ├── 01_FastAPI_essentiel.md
+│   │   │   ├── 02_Docker_essentiel.md
+│   │   │   ├── 03_Loguru_essentiel.md
+│   │   │   ├── 04_Pytest_API_essentiel.md
+│   │   │   └── liens_officiels.md
+│   │   └── squelette/
+│   │       ├── .venv/
+│   │       ├── app/
+│   │       ├── model/
+│   │       ├── tests/
+│   │       ├── logs/ (généré à l'exécution)
+│   │       ├── Dockerfile
+│   │       ├── .dockerignore
+│   │       ├── requirements.txt
+│   │       └── README.md
+│   └── M0-B2/
+│       ├── ressources/
+│       └── squelette/
+└── module-01/ ... (à venir)
+```
+
+---
+
+## �🔗 CI/CD
 
 - **GitHub Actions :** Workflows pytest par module (déclenchement filtré par chemin)
 - **M0-B1 :** ✅ Actif — lancer sur tout changement dans `module-00/M0-B1/squelette/**`
