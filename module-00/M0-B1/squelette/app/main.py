@@ -146,9 +146,15 @@ def predict(item: MachineInput) -> PredictionResponse:
         )
 
         elapsed_ms = (perf_counter() - start) * 1000
+        p_basse = proba_dict.get("basse")
+        p_moyenne = proba_dict.get("moyenne")
+        p_haute = proba_dict.get("haute")
         logger.info(
-            "/predict - prédiction: {} | durée: {:.2f} ms",
+            "/predict - prédiction: {} | proba_basse={} | proba_moyenne={} | proba_haute={} | durée: {:.2f} ms",
             class_pred,
+            p_basse,
+            p_moyenne,
+            p_haute,
             elapsed_ms,
         )
         return response
