@@ -4,7 +4,8 @@ Expose un modèle scikit-learn pré-entraîné (cf. `model/train_baseline.py`) v
 deux routes :
 
 - `GET /health`  : santé du service (déjà fonctionnel)
-- `POST /predict` : prédiction de criticité (🎯 à compléter par l'apprenant)
+- `POST /predict` : prédiction de criticité
+- `POST /explain` : explication de la prédiction par un LLM local Ollama
 
 Le modèle est chargé une seule fois au démarrage via le `lifespan` FastAPI puis
 réutilisé pour chaque requête.
