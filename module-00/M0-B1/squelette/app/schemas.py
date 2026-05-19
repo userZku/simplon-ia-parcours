@@ -75,6 +75,17 @@ class PredictionResponse(BaseModel):
     )
 
 
+class ExplainResponse(BaseModel):
+    """Sortie de la route /explain : prédiction + explication LLM."""
+
+    criticite: Criticite = Field(description="Classe prédite par le modèle.")
+    probabilites: dict[Criticite, float] = Field(
+        description="Probabilité par classe (somme = 1.0).",
+    )
+    explication: str = Field(description="Explication en français en 2-3 phrases.")
+    modele_llm: str = Field(description="Nom du modèle Ollama utilisé.")
+
+
 class HealthResponse(BaseModel):
     """Sortie de la route /health."""
 
