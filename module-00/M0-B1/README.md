@@ -11,7 +11,21 @@ Dossier de travail principal:
 
 ---
 
-## 2) Ce qui a été fait
+## 2) Lancer rapidement le projet (uv + .venv)
+
+```powershell
+cd module-00/M0-B1/squelette
+uv venv .venv
+.venv\Scripts\Activate.ps1
+uv pip install -r requirements.txt
+uvicorn app.main:app --reload
+```
+
+Docs interactive: http://127.0.0.1:8000/docs
+
+---
+
+## 3) Ce qui a été fait
 
 ### API
 - Route `GET /health` operationnelle.
@@ -65,7 +79,7 @@ Dossier de travail principal:
 
 ---
 
-## 3) Etat de l'art
+## 4) Etat de l'art
 
 ### Exposition de modele tabulaire
 Pour un modele scikit-learn tabulaire, la stack retenue est :
@@ -102,13 +116,13 @@ Le Dockerfile :
 
 ---
 
-## 4) Sorties terminal
+## 5) Sorties terminal
 
 ### 4.1 Lancement API
 Commande:
 
 ```powershell
-c:/.../module-00/M0-B1/squelette/.venv/Scripts/python.exe -m uvicorn app.main:app --host 127.0.0.1 --port 8002
+c:/.../module-00/M0-B1/squelette/.venv/Scripts/python.exe -m uvicorn app.main:app --host 127.0.0.1 --port 8000
 ```
 
 Extrait:
@@ -123,7 +137,7 @@ INFO:     Waiting for application startup.
 Commande:
 
 ```powershell
-Invoke-RestMethod -Uri 'http://127.0.0.1:8002/health' -Method Get
+Invoke-RestMethod -Uri 'http://127.0.0.1:8000/health' -Method Get
 ```
 
 Sortie:
@@ -149,7 +163,7 @@ $payload = @{
   nb_incidents_3_mois=2
 } | ConvertTo-Json
 
-Invoke-RestMethod -Uri 'http://127.0.0.1:8002/predict' -Method Post -ContentType 'application/json' -Body $payload
+Invoke-RestMethod -Uri 'http://127.0.0.1:8000/predict' -Method Post -ContentType 'application/json' -Body $payload
 ```
 
 Sortie:
@@ -191,7 +205,7 @@ StatusCode: 422
 Commande:
 
 ```powershell
-Invoke-RestMethod -Uri 'http://127.0.0.1:8002/explain' -Method Post -ContentType 'application/json' -Body $payload
+Invoke-RestMethod -Uri 'http://127.0.0.1:8000/explain' -Method Post -ContentType 'application/json' -Body $payload
 ```
 
 Sortie (extrait):
@@ -225,7 +239,7 @@ Sortie:
 
 ---
 
-## 5) Extrait de logs applicatifs
+## 6) Extrait de logs applicatifs
 
 Fichier: `squelette/logs/api.log`
 
@@ -236,18 +250,6 @@ Fichier: `squelette/logs/api.log`
 2026-05-19 15:44:05.553 | INFO | app.main:explain:185 - /explain - payload recu: {...}
 2026-05-19 15:44:20.151 | INFO | app.main:explain:233 - /explain - prediction: basse | modele_llm: qwen2.5:1.5b | duree: 14597.15 ms
 ```
-
----
-
-## 6) Lancer rapidement le projet
-
-```powershell
-cd module-00/M0-B1/squelette
-pip install -r requirements.txt
-uvicorn app.main:app --reload
-```
-
-Docs interactive: http://127.0.0.1:8000/docs
 
 ---
 
