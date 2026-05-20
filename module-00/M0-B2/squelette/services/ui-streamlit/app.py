@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import os
 
+import httpx
 import streamlit as st
 
 
@@ -52,11 +53,26 @@ if st.button("Analyser", type="primary", disabled=not texte.strip()):
     # - Affiche le sentiment dans un encadré coloré (st.success / st.warning /
     #   st.error selon la classe).
     # - Affiche les scores 5 étoiles bruts via st.bar_chart().
-    st.info("📡 Appel API à implémenter — Tâche 4 du brief M0-B2.")
-    st.code(
-        f'httpx.post("{API_URL}/predict", json={{"texte": "..."}}, timeout=10)',
-        language="python",
-    )
+    try:
+        response = httpx.post(f"{API_URL}/predict", json={"texte": texte}, timeout=10)
+        response.raise_for_status()
+        result = response.json()
+        sentiment = result["sentiment"]
+        scores = result["scores_5_stars"]
+        if sentiment == "positif":
+            st.success(f"Sentiment : {sentiment.upper()}")
+        elif sentiment == "neutre":
+            st.warning(f"Sentiment : {sentiment.upper()}")
+        elif sentiment == "négatif":
+            st.error(f"Sentiment : {sentiment.upper()}")
+        else:
+            st.error(f"Sentiment : {sentiment.upper()}")
+        st.bar_chart(scores)
+    except httpx.RequestError as exc:
+        st.error(f"Erreur de connexion à l'API : {exc}")
+    except httpx.HTTPStatusError as exc:
+        st.error(f"Erreur HTTP {exc.response.status_code} : {exc.response.text}")
+    
 
 with st.sidebar:
     st.markdown(f"**API URL** : `{API_URL}`")
