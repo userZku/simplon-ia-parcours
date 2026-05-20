@@ -32,6 +32,30 @@ class ReviewIn(BaseModel):
         return v
 
 
+class BatchIn(BaseModel):
+    """Payload d'entrée pour POST /predict/batch.
+
+    Permet d'analyser plusieurs reviews en une seule requête.
+    """
+
+    textes: list[str] = Field(
+        ...,
+        min_length=1,
+        max_length=100,
+        description="Liste de reviews FR (1 a 100 textes).",
+        examples=[["Sejour agreable et equipe souriante.", "Chambre sale et bruyante."]],
+    )
+
+    @field_validator("textes")
+    @classmethod
+    def textes_non_vides(cls, values: list[str]) -> list[str]:
+        """Refuse les elements vides ou composes uniquement d'espaces."""
+        for i, value in enumerate(values):
+            if not value or not value.strip():
+                raise ValueError(f"Le texte a l'index {i} ne doit pas etre vide.")
+        return values
+
+
 class SentimentOut(BaseModel):
     """Réponse de POST /predict.
 
@@ -49,6 +73,13 @@ class SentimentOut(BaseModel):
     )
     model_name: str = Field(..., description="Identifiant HF du modèle utilisé.")
     latence_ms: float = Field(..., ge=0, description="Temps d'inférence côté serveur en millisecondes.")
+
+
+class BatchOut(BaseModel):
+    """Réponse de POST /predict/batch."""
+
+    count: int = Field(..., ge=1, description="Nombre de reviews traitees.")
+    predictions: list[SentimentOut] = Field(..., description="Resultats d'inference dans l'ordre des textes d'entree.")
 
 
 class HealthOut(BaseModel):

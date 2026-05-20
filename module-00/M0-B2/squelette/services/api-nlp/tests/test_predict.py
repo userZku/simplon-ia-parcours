@@ -69,3 +69,34 @@ def test_predict_returns_422_for_blank_text(client: TestClient) -> None:
     assert response.status_code == 422
     detail = response.json()["detail"]
     assert any("ne doit pas être vide" in err["msg"] for err in detail)
+
+
+def test_predict_batch_returns_200_and_preserves_order(client: TestClient) -> None:
+    payload = {
+        "textes": [
+            "Super accueil et petit-dejeuner genereux.",
+            "Attente interminable a la reception.",
+        ]
+    }
+
+    response = client.post("/predict/batch", json=payload)
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["count"] == 2
+    assert len(body["predictions"]) == 2
+    assert all(pred["sentiment"] in {"négatif", "neutre", "positif"} for pred in body["predictions"])
+
+
+def test_predict_batch_returns_422_for_empty_list(client: TestClient) -> None:
+    response = client.post("/predict/batch", json={"textes": []})
+
+    assert response.status_code == 422
+
+
+def test_predict_batch_returns_422_for_blank_item(client: TestClient) -> None:
+    response = client.post("/predict/batch", json={"textes": ["review ok", "   "]})
+
+    assert response.status_code == 422
+    detail = response.json()["detail"]
+    assert any("ne doit pas etre vide" in err["msg"] for err in detail)

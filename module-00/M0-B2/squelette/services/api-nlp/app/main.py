@@ -17,7 +17,7 @@ from fastapi import FastAPI, HTTPException, status
 from loguru import logger
 
 from app import inference
-from app.schemas import HealthOut, InfoOut, ReviewIn, SentimentOut
+from app.schemas import BatchIn, BatchOut, HealthOut, InfoOut, ReviewIn, SentimentOut
 
 
 # --- Configuration Loguru (compact, lisible pour des apprenants) ---
@@ -141,11 +141,7 @@ def predict(payload: ReviewIn) -> SentimentOut:
     # Pas de check `model_loaded` ici : politique fail-fast — si le pipeline
     # ne s'est pas chargé, le conteneur a crashé au démarrage et on n'arrive
     # jamais ici. `state["pipeline"]` est donc garanti non-None.
-    if len(payload.texte) > MAX_TEXT_LENGTH:
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail=f"Texte trop long (> {MAX_TEXT_LENGTH} caractères).",
-        )
+    _ensure_text_length(payload.texte)
 
     result = inference.predict_sentiment(state["pipeline"], payload.texte, MODEL_NAME)
     logger.info(
@@ -155,3 +151,23 @@ def predict(payload: ReviewIn) -> SentimentOut:
         latence=result.latence_ms,
     )
     return result
+
+
+@app.post("/predict/batch", response_model=BatchOut, status_code=status.HTTP_200_OK)
+def predict_batch(payload: BatchIn) -> BatchOut:
+    """Classifie un lot de reviews FR en `négatif / neutre / positif`."""
+    predictions: list[SentimentOut] = []
+    for texte in payload.textes:
+        _ensure_text_length(texte)
+        predictions.append(inference.predict_sentiment(state["pipeline"], texte, MODEL_NAME))
+
+    logger.info("predict_batch | n_textes={} | statut=ok", len(payload.textes))
+    return BatchOut(count=len(predictions), predictions=predictions)
+
+
+def _ensure_text_length(text: str) -> None:
+    if len(text) > MAX_TEXT_LENGTH:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"Texte trop long (> {MAX_TEXT_LENGTH} caractères).",
+        )

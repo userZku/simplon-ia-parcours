@@ -20,12 +20,15 @@ services:
     environment:
       # Chemin interne au conteneur (non configurable par l'apprenant)
       HF_HOME: /app/models
+      HEALTHCHECK_RETRIES: "5"
+      HEALTHCHECK_DELAY_SECONDS: "0.5"
+      HEALTHCHECK_TIMEOUT_SECONDS: "2"
     volumes:
       # cache modèle HF (sinon re-download à chaque up) — préserve aussi entre `down` et `up`
       - ./models:/app/models
       - ./logs:/app/logs
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health', timeout=2)"]
+      test: ["CMD", "python", "-m", "app.healthcheck"]
       interval: 30s
       timeout: 5s
       retries: 3
