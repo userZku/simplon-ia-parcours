@@ -21,4 +21,6 @@ jobs:
       job-name: M0-B2 api-nlp tests
       working-directory: module-00/M0-B2/squelette/services/api-nlp
       python-version: "3.11"
-      pytest-command: pytest -q
+      pytest-command: |
+        pip install torch==2.5.1 --index-url https://download.pytorch.org/whl/cpu
+        pytest -q
