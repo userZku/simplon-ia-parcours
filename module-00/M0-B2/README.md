@@ -1,4 +1,6 @@
-# M0-B2 - README Personnalise (Aubergine Hotels)
+# M0-B2 - README Theo (Aubergine Hotels)
+
+> **Warning**  Ce README a été rédigé par une IA en se basant sur les fichiers du repo et les livrables attendus, puis relu et corrigé par moi-meme (Theo).
 
 ## Objectif
 
@@ -43,9 +45,8 @@ Echantillon d'analyse qualitative de cas piege observables sur des avis clients 
 | "Equipe adorable, chambre minuscule, petit-dej correct, insonorisation catastrophique." | neutre | negatif | **Mixte** : coexistence d'indices positifs et negatifs forts, le modele moyenne au lieu de prioriser le signal critique. |
 | "J'ai adore l'emplacement, je deteste le rapport qualite/prix." | neutre | neutre (ou negatif selon politique) | **Ambivalence** : avis reellement bipolaire; la prediction neutre peut etre defendable mais doit etre contextualisee metier. |
 
-Conclusion operationnelle : les erreurs les plus couteuses pour Aubergine Hotels sont les faux positifs
-sur des avis contenant sarcasme, negation ou comparaison. Ce sont des cas ou la formulation est
-linguistiquement positive en surface mais experientialement negative.
+Conclusion : les erreurs les plus couteuses pour Aubergine Hotels sont les faux positifs
+sur des avis contenant sarcasme, negation ou comparaison. Ce sont des cas ou la formulation est linguistiquement positive en surface mais negative dans les faits.
 
 ## Justification du seuil de mapping 5 etoiles -> 3 classes
 
@@ -67,7 +68,7 @@ ou chambre correcte mais petit-dejeuner decevant). Le neutre sert donc de zone t
 
 Pourquoi ne pas basculer `4 stars` en neutre ? Parce qu'en pratique `4 stars` correspond souvent
 a une experience globalement satisfaisante avec reserves mineures. Le basculer en neutre ferait
-augmenter artificiellement le volume d'alertes operationnelles et diminuerait la lisibilite des KPI.
+augmenter artificiellement le volume d'alertes operationnelles et diminuerait la lisibilite des KPI (Key Performance Indicators).
 Inversement, remonter `2 stars` en neutre masquerait trop de signaux d'insatisfaction.
 
 Ce mapping est donc un compromis metier :
@@ -90,11 +91,42 @@ La collection inclut des requetes nominales et des cas limites (>= 5 requis) :
 - `POST /predict` texte vide (422)
 - `POST /predict` texte blanc (422)
 - `POST /predict` champ manquant (422)
-- `POST /predict/batch` lot mixte (bonus)
+- `POST /predict/batch` lot mixte 
 - `POST /predict/batch` liste vide (422)
 - `POST /predict/batch` element blanc (422)
 
 Fichier : `squelette/postman/M0-B2_collection.json`
+
+## Logs applicatifs (Loguru)
+
+L'API utilise Loguru pour journaliser les evenements importants dans un fichier dedie.
+
+- Fichier de log : `squelette/logs/api.log` (monte depuis `./logs:/app/logs` dans Docker)
+- Niveau configure : `INFO`
+- Rotation : `5 MB`
+- Retention : `7 days`
+- Compression des archives : `zip`
+
+Exemples de traces utiles :
+
+- demarrage et chargement du modele HF
+- appel `/predict` avec sentiment retourne et latence
+- appel `/predict/batch` avec nombre de textes traites
+- arret propre de l'API
+
+Exemples reels extraits de `squelette/logs/api.log` :
+
+```text
+2026-05-20 09:56:53.414 | INFO     | app.main:lifespan:82 - Chargement du pipeline HF : cmarkea/distilcamembert-base-sentiment
+2026-05-20 09:56:54.952 | SUCCESS  | app.main:lifespan:89 - Pipeline chargé. Modèle prêt.
+2026-05-20 12:30:21.696 | INFO     | app.main:predict:151 - predict | texte='Service excellent, je recommande.' | sentiment=positif | latence=12.3ms
+2026-05-20 13:11:10.048 | INFO     | app.main:predict_batch:164 - predict_batch | n_textes=2 | statut=ok
+2026-05-20 12:31:23.721 | INFO     | app.main:lifespan:92 - Arrêt de l'API. Libération du pipeline.
+```
+
+Point important : les acces repetitifs du healthcheck (`GET /health`) sont filtres cote logs d'acces
+pour eviter le bruit et garder des logs lisibles pour le diagnostic metier.
+
 
 ## Bonus 1 - Healthcheck custom avec retry
 
@@ -123,8 +155,8 @@ Format d'entree :
 ```json
 {
     "textes": [
-        "Service impeccable.",
-        "Nuit horrible, tres bruyant."
+        "Sejour agreable et equipe souriante.",
+        "Chambre sale et bruyante."
     ]
 }
 ```
@@ -138,15 +170,27 @@ Format de sortie :
         {
             "sentiment": "positif",
             "scores_5_stars": {
-                "1 star": 0.01,
-                "2 stars": 0.03,
-                "3 stars": 0.08,
-                "4 stars": 0.23,
-                "5 stars": 0.65
+                "4 stars": 0.47069036960601807,
+                "5 stars": 0.3921077251434326,
+                "3 stars": 0.11956764757633209,
+                "2 stars": 0.013574938289821148,
+                "1 star": 0.004059353843331337
             },
             "model_name": "cmarkea/distilcamembert-base-sentiment",
-            "latence_ms": 11.8
-        }
+            "latence_ms": 634.2910049970669
+        },
+        {
+             "sentiment": "négatif",
+            "scores_5_stars": {
+                "2 stars": 0.44018369913101196,
+                "1 star": 0.2696089744567871,
+                "3 stars": 0.23395326733589172,
+                "4 stars": 0.04160341992974281,
+                "5 stars": 0.01465072575956583
+            },
+            "model_name": "cmarkea/distilcamembert-base-sentiment",
+            "latence_ms": 17.937773998710327
+                }
     ]
 }
 ```
