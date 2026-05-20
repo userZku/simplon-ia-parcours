@@ -108,6 +108,121 @@
         "description": "Validation Pydantic : texte vide doit renvoyer 422."
       },
       "response": []
+    },
+    {
+      "name": "POST /predict — texte uniquement espaces (422 attendu)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"texte\": \"     \"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/predict",
+          "host": ["{{base_url}}"],
+          "path": ["predict"]
+        },
+        "description": "Validation Pydantic : chaîne blanche refusée (422)."
+      },
+      "response": []
+    },
+    {
+      "name": "POST /predict — champ manquant (422 attendu)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{}"
+        },
+        "url": {
+          "raw": "{{base_url}}/predict",
+          "host": ["{{base_url}}"],
+          "path": ["predict"]
+        },
+        "description": "Cas limite : payload incomplet, la clé `texte` est absente."
+      },
+      "response": []
+    },
+    {
+      "name": "POST /predict/batch — lot mixte",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"textes\": [\n    \"Excellent accueil, literie parfaite et petit-dejeuner tres varie.\",\n    \"Rien de catastrophique, mais franchement moyen pour le prix.\",\n    \"Chambre sale, bruit toute la nuit, service absent.\"\n  ]\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/predict/batch",
+          "host": ["{{base_url}}"],
+          "path": ["predict", "batch"]
+        },
+        "description": "Bonus : endpoint batch. Vérifie le traitement de plusieurs reviews dans une seule requête."
+      },
+      "response": []
+    },
+    {
+      "name": "POST /predict/batch — liste vide (422 attendu)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"textes\": []\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/predict/batch",
+          "host": ["{{base_url}}"],
+          "path": ["predict", "batch"]
+        },
+        "description": "Cas limite : batch vide refusé par validation (422)."
+      },
+      "response": []
+    },
+    {
+      "name": "POST /predict/batch — élément blanc (422 attendu)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"textes\": [\n    \"Service correct.\",\n    \"   \"\n  ]\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/predict/batch",
+          "host": ["{{base_url}}"],
+          "path": ["predict", "batch"]
+        },
+        "description": "Cas limite : un élément invalide dans la liste doit faire échouer toute la requête (422)."
+      },
+      "response": []
     }
   ]
 }
