@@ -42,9 +42,18 @@ def map_stars_to_sentiment(star_label: str) -> Sentiment:
     Raises:
         ValueError: si `star_label` n'est pas dans le format attendu.
     """
-    # TODO Tâche 3 — implémenter le mapping de ton choix et documenter
-    # le raisonnement métier dans le README perso async.
-    raise NotImplementedError("Compléter `map_stars_to_sentiment` (Tâche 3).")
+    mapping: dict[str, Sentiment] = {
+        "1 star": "négatif",
+        "2 stars": "négatif",
+        "3 stars": "neutre",
+        "4 stars": "positif",
+        "5 stars": "positif",
+    }
+
+    try:
+        return mapping[star_label]
+    except KeyError as exc:
+        raise ValueError(f"Label étoile inattendu: {star_label!r}") from exc
 
 
 def predict_sentiment(pipeline: Any, text: str, model_name: str) -> SentimentOut:
@@ -59,14 +68,18 @@ def predict_sentiment(pipeline: Any, text: str, model_name: str) -> SentimentOut
     Returns:
         SentimentOut avec sentiment 3 classes, scores 5★ bruts, et latence ms.
     """
-    # TODO Tâche 3 — compléter :
-    #
-    # 1. Mesurer le temps d'inférence (time.perf_counter() avant/après).
-    # 2. Appeler `pipeline(text, top_k=None)` pour récupérer toutes les
-    #    probabilités (5 entrées, une par étoile).
-    # 3. Construire `scores_5_stars: dict[str, float]` à partir du résultat.
-    # 4. Identifier le label argmax (la plus haute proba).
-    # 5. Appeler `map_stars_to_sentiment(label_argmax)` pour obtenir la
-    #    classe métier.
-    # 6. Renvoyer un `SentimentOut(...)`.
-    raise NotImplementedError("Compléter `predict_sentiment` (Tâche 3).")
+    start = time.perf_counter()
+    raw = pipeline(text, top_k=None)
+
+    scores_5_stars = {item["label"]: float(item["score"]) for item in raw}
+
+    label_argmax = max(scores_5_stars, key=scores_5_stars.get)
+    sentiment = map_stars_to_sentiment(label_argmax)
+    latence_ms = (time.perf_counter() - start) * 1000
+
+    return SentimentOut(
+        sentiment=sentiment,
+        scores_5_stars=scores_5_stars,
+        model_name=model_name,
+        latence_ms=latence_ms,
+    )
