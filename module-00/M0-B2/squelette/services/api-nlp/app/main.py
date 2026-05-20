@@ -25,7 +25,16 @@ from app.schemas import HealthOut, InfoOut, ReviewIn, SentimentOut
 # `backtrace` (frames externes des libs). On garde un format standard.
 # Pour debugger un cas complexe, repasse à diagnose=True ponctuellement.
 logger.remove()
-logger.add(sys.stderr, level="INFO", backtrace=False, diagnose=False)
+logger.add(
+    "logs/api.log",
+    level="INFO",
+    rotation="5 MB",
+    retention="7 days",
+    compression="zip",
+    backtrace=False,
+    diagnose=False,
+    encoding="utf-8",
+)
 
 
 # --- Filtre access log uvicorn : on n'affiche pas les pings healthcheck ---
@@ -138,12 +147,11 @@ def predict(payload: ReviewIn) -> SentimentOut:
             detail=f"Texte trop long (> {MAX_TEXT_LENGTH} caractères).",
         )
 
-    # TODO Tâche 3 — Appeler inference.predict_sentiment() et logger la requête.
-    # Pour l'instant, on signale que ce n'est pas implémenté.
-    raise HTTPException(
-        status_code=status.HTTP_501_NOT_IMPLEMENTED,
-        detail=(
-            "Endpoint /predict pas encore implémenté. Voir Tâche 3 du brief "
-            "et `app/inference.py`."
-        ),
+    result = inference.predict_sentiment(state["pipeline"], payload.texte, MODEL_NAME)
+    logger.info(
+        "predict | texte='{texte}' | sentiment={sentiment} | latence={latence:.1f}ms",
+        texte=payload.texte[:80].replace("\n", " "),
+        sentiment=result.sentiment,
+        latence=result.latence_ms,
     )
+    return result
