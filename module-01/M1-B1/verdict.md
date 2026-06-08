@@ -5,31 +5,26 @@
 
 ## Contexte
 
-(En une phrase : pourquoi ce travail, qu'est-ce qui était attendu.)
+Objectif du brief : décider si le modèle historique `pyrenex-risk-v1` doit être remplacé par un modèle réentraîné sur des données plus récentes, évalué proprement sur holdout intact.
 
 ## Démarche
 
-(En 2-3 phrases : dataset utilisé, split, nombre de configurations testées,
-critères d'évaluation.)
+Nous avons entraîné 3 configurations (`default`, `balanced`, `gb_variant_a`) sur `lending_club_train.csv` avec split interne stratifié (`test_size=0.2`, `random_state=42`) et preprocessing cohérent baseline. La config retenue est `balanced` (meilleur compromis performance/stabilité). L'évaluation finale a été réalisée une seule fois sur `lending_club_holdout.csv`.
 
 ## Verdict chiffré
 
 | Métrique | Baseline 2017 (Pyrenex-risk-v1) | Modèle retenu (v2) | Variation |
 |---|---|---|---|
-| F1 macro (holdout) | … | … | … |
-| F1 défaut | … | … | … |
-| ROC-AUC | … | … | … |
-| Recall défaut | … | … | … |
+| F1 macro (holdout) | 0.5018 | 0.6123 | +0.1105 |
+| F1 défaut | 0.0860 | 0.4357 | +0.3497 |
+| ROC-AUC | 0.7296 | 0.7370 | +0.0074 |
+| Recall défaut | 0.0500 | 0.6455 | +0.5955 |
 
-**Configuration retenue** : (rappel des hyperparamètres principaux)
+**Configuration retenue** : `RandomForestClassifier(n_estimators=200, max_depth=10, min_samples_leaf=10, class_weight='balanced', random_state=42, n_jobs=-1)`.
 
 ## Trade-off explicité au métier
 
-(2-3 phrases : qu'est-ce que le client gagne ? qu'est-ce qu'il perd ?
-Par exemple : *« le rappel défaut passe de 14% à 61% — soit 4× plus de
-mauvais payeurs détectés — au prix d'une précision défaut qui passe de
-38% à 41%. En clair : pour rattraper plus de défauts, le modèle déclenche
-davantage de fausses alertes. »*)
+Le gain principal est la détection des défauts : le rappel défaut passe de 5% à 64.6%, ce qui réduit fortement le risque de laisser passer des mauvais payeurs. En contrepartie, la précision défaut reste modérée (~32.9%), donc le modèle génère plus de fausses alertes. Concrètement, Pyrenex capte bien plus de dossiers risqués, mais doit absorber plus de revues manuelles/refus discutables.
 
 ## Précautions avant mise en production
 
@@ -40,12 +35,12 @@ davantage de fausses alertes. »*)
 - Mettre en place un **monitoring** dès le déploiement (cf. M5/M6)
 - Surveiller les **variables sensibles** identifiées (FICO, état US,
   revenu) — risque de disparate impact à auditer (M2/M7)
+- Lancer un déploiement progressif (pilot/shadow mode) pour mesurer l'impact opérationnel réel avant généralisation.
 
 ## Recommandation
 
-✅ **Remplacer Pyrenex-risk-v1** par v2 *OU* ⛔ **Ne pas remplacer** —
-choisis et justifie en une phrase.
+✅ **Remplacer Pyrenex-risk-v1 par v2**, car le v2 améliore nettement la détection du défaut (indicateur métier critique) tout en gardant un ROC-AUC au moins équivalent. À condition de calibrer le seuil de décision et de monitorer la dérive après mise en prod.
 
 ---
 
-*Signé : <prenom> <nom>, FastIA, le YYYY-MM-DD*
+*Signé : Théo Capitaine, FastIA, le 2026-06-08*

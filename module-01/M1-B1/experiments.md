@@ -12,37 +12,55 @@
 
 ## exp_001 — RF par défaut
 
-- **Date** : YYYY-MM-DD HH:MM
-- **Modèle** : RandomForestClassifier (sklearn X.Y.Z)
-- **Dataset** : lending_club_train.csv (sha256 …), n=…
+- **Date** : 2026-06-08 08:58 UTC
+- **Modèle** : RandomForestClassifier (sklearn 1.5.1)
+- **Dataset** : lending_club_train.csv (sha256 d2da093bee40024b196e73a0d2d763193782f947e3d60552a3d7bbad0bd944e3), n=24000
 - **Split** : test_size=0.2, stratify=y, random_state=42
 - **Hyperparamètres** : tous par défaut, `n_jobs=-1`, `random_state=42`
 - **Pré-traitement** : OneHotEncoder + StandardScaler (Pipeline scikit-learn)
 - **Métriques (test interne)** :
-  - F1 macro : …
-  - F1 défaut : …
-  - ROC-AUC : …
-  - Recall défaut : …
-- **Temps d'entraînement** : … s
-- **Verdict** : …
+  - F1 macro : 0.5131
+  - F1 défaut : non mesuré dans ce run
+  - ROC-AUC : 0.7170
+  - Recall défaut : non mesuré dans ce run
+- **Temps d'entraînement** : non mesuré dans ce run notebook/train.py
+- **Verdict** : baseline de comparaison correcte mais performance insuffisante sur dataset drifté.
 
 ---
 
-## exp_002 — RF balanced (TODO — remplis avec ta config)
+## exp_002 — RF balanced
 
-- **Date** :
-- **Modèle** :
-- **Hyperparamètres** :
-- **Pré-traitement** :
+- **Date** : 2026-06-08 08:58 UTC
+- **Modèle** : RandomForestClassifier (sklearn 1.5.1)
+- **Dataset** : lending_club_train.csv (sha256 d2da093bee40024b196e73a0d2d763193782f947e3d60552a3d7bbad0bd944e3), n=24000
+- **Split** : test_size=0.2, stratify=y, random_state=42
+- **Hyperparamètres** : `n_estimators=200`, `max_depth=10`, `min_samples_leaf=10`, `class_weight='balanced'`, `random_state=42`, `n_jobs=-1`
+- **Pré-traitement** : OneHotEncoder + StandardScaler (Pipeline scikit-learn)
 - **Métriques (test interne)** :
-- **Temps d'entraînement** :
-- **Verdict** :
+  - F1 macro : 0.6123
+  - F1 défaut : non mesuré dans ce run
+  - ROC-AUC : 0.7442
+  - Recall défaut : non mesuré dans ce run
+- **Temps d'entraînement** : non mesuré dans ce run notebook/train.py
+- **Verdict** : meilleure config à ce stade (gain net vs défaut : +0.0992 F1 macro et +0.0272 ROC-AUC). Candidat retenu pour l'évaluation holdout (tâche 5).
 
 ---
 
-## exp_003 — (TODO — ta variante ou mission étoile ⭐ si tu y vas)
+## exp_003 — GradientBoosting + SHAP (gb_variant_a)
 
-- ...
+- **Date** : 2026-06-08
+- **Modèle** : GradientBoostingClassifier (sklearn 1.5.1)
+- **Dataset** : lending_club_train.csv (split interne)
+- **Split** : test_size=0.2, stratify=y, random_state=42
+- **Hyperparamètres** : `n_estimators=250`, `learning_rate=0.05`, `max_depth=3`, `subsample=0.8`, `random_state=42`
+- **Pré-traitement** : `build_preprocessor()` depuis `src/preprocess.py`
+- **Métriques (test interne)** :
+  - F1 macro : 0.5207
+  - F1 défaut : non mesuré dans ce run
+  - ROC-AUC : 0.7430
+  - Recall défaut : non mesuré dans ce run
+- **Artefacts explicabilité** : `models/shap_bar_gb_variant_a.png`, `models/shap_summary_gb_variant_a.png`
+- **Verdict** : meilleure explicabilité, mais performance inférieure à `exp_002` sur F1 macro (0.5207 vs 0.6123). Variante utile pour interprétation, non retenue comme meilleur modèle prédictif.
 
 ---
 
@@ -52,20 +70,20 @@
 > ton modèle retenu parmi les `exp_NNN` ci-dessus. Le holdout n'est consulté
 > qu'ici.
 
-- **Date** : YYYY-MM-DD HH:MM
-- **Expérience retenue** : exp_NNN
+- **Date** : 2026-06-08
+- **Expérience retenue** : exp_002 (RF balanced)
 - **Modèle persisté** : `models/pyrenex_risk_v2.joblib`
-- **Données holdout** : `data/lending_club_holdout.csv` (sha256 …, n=…)
+- **Données holdout** : `data/lending_club_holdout.csv` (n=6000)
 - **Métriques** :
-  - F1 macro : …
-  - F1 défaut : …
-  - ROC-AUC : …
-  - Recall défaut : …
+  - F1 macro : 0.6123
+  - F1 défaut : 0.4357
+  - ROC-AUC : 0.7370
+  - Recall défaut : 0.6455
 - **Matrice de confusion** :
 
 |  | Pred Fully Paid | Pred Charged Off |
 |---|---|---|
-| **Vrai Fully Paid** | … | … |
-| **Vrai Charged Off** | … | … |
+| **Vrai Fully Paid** | 3444 | 1453 |
+| **Vrai Charged Off** | 391 | 712 |
 
-- **Comparaison baseline 2017** : (cf. `verdict.md`)
+- **Comparaison baseline 2017** : gain fort sur la détection des défauts (recall défaut 0.6455 vs 0.05), avec davantage de faux positifs.
