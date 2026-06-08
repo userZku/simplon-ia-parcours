@@ -135,6 +135,69 @@ Mini-cours d'appui : voir [`./ressources/`](./ressources/).
 
 ---
 
+## 🔎 Flux middleware Loguru (GET /health)
+
+Le middleware intercepte chaque requête, attribue un `request_id`, mesure la
+latence, écrit une trace JSON structurée, puis renvoie le header
+`X-Request-ID` dans la réponse.
+
+```mermaid
+sequenceDiagram
+   participant Client
+   participant M as LoggingMiddleware
+   participant R as Route /health
+   participant L as Loguru
+
+   Client->>M: GET /health
+   M->>M: request_id (header ou UUID)
+   M->>M: start timer
+   M->>R: call_next(request)
+   R-->>M: 200 {"status":"ok"}
+   M->>M: latency__ms = now - start
+   M->>L: log JSON (method,path,status,latency__ms,request__id,...)
+   M-->>Client: response + X-Request-ID
+```
+
+### Schéma FastIA — 7 clés obligatoires
+
+- `timestamp`
+- `level`
+- `method`
+- `path`
+- `status`
+- `latency__ms`
+- `request__id`
+
+Enrichissement ajouté: `endpoint` normalisé (même route, sans slash final),
+et `LOG_LEVEL` pilotable par variable d'environnement.
+
+Règle sécurité: aucune donnée de body et aucune PII n'est journalisée.
+
+### Exemple de log JSON (une requête GET /health)
+
+```json
+{
+   "text": "2026-06-08 15:23:46.737 | INFO     | app.middleware:dispatch:58 - request_completed\n",
+   "record": {
+      "time": "2026-06-08T15:23:46.737000+00:00",
+      "level": {
+         "name": "INFO"
+      },
+      "message": "request_completed",
+      "extra": {
+         "method": "GET",
+         "path": "/health",
+         "endpoint": "/health",
+         "status": 200,
+         "latency__ms": 0.42,
+         "request__id": "0f4f31ce-896a-4f82-b165-b3596ca7903a"
+      }
+   }
+}
+```
+
+---
+
 ## 🆘 Bloqué·e ?
 
 1. **Swagger** : ouvre `http://localhost:8000/docs` — souvent le plus

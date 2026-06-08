@@ -5,6 +5,7 @@ TODO — Complete the routes /info and /predict.
 from __future__ import annotations
 
 import json
+import os
 import sys
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -23,9 +24,10 @@ from app.schemas import HealthResponse, LoanApplication, Prediction
 
 LOGS_DIR = Path(__file__).parent.parent / "logs"
 LOGS_DIR.mkdir(exist_ok=True)
+LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
 
 logger.remove()
-logger.add(sys.stderr, level="INFO", colorize=True)
+logger.add(sys.stderr, level=LOG_LEVEL, colorize=True)
 logger.add(
     LOGS_DIR / "api.log",
     rotation="10 MB",
@@ -33,7 +35,7 @@ logger.add(
     compression="gz",
     serialize=True,
     enqueue=True,
-    level="INFO",
+    level=LOG_LEVEL,
 )
 
 
