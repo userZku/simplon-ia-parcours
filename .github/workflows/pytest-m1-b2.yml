@@ -1,0 +1,26 @@
+name: M1-B2 Pytest CI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "module-01/M1-B2/**"
+      - ".github/workflows/pytest-m1-b2.yml"
+      - ".github/workflows/_python-pytest-reusable.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "module-01/M1-B2/**"
+      - ".github/workflows/pytest-m1-b2.yml"
+      - ".github/workflows/_python-pytest-reusable.yml"
+
+jobs:
+  test:
+    uses: ./.github/workflows/_python-pytest-reusable.yml
+    with:
+      job-name: M1-B2 tests
+      working-directory: module-01/M1-B2
+      python-version: "3.11"
+      pytest-command: |
+        pytest -v tests/test_model_contract.py
+        pytest -v
