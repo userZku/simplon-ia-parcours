@@ -22,7 +22,7 @@ ipykernel==6.29.5
 
 # Mission étoile ⭐ optionnelle — décommente selon ton choix
 # Variante A (Gradient Boosting + SHAP) :
-# shap==0.46.0
+shap==0.46.0
 # Variante B (Fine-tuning SLM) :
 # transformers==4.46.0
 # torch==2.5.0
