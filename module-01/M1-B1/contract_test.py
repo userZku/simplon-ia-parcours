@@ -11,6 +11,7 @@ from __future__ import annotations
 from pathlib import Path
 
 import joblib
+import numpy as np
 import pandas as pd
 
 MODEL_PATH = Path(__file__).parent / "models" / "pyrenex_risk_v2.joblib"
@@ -32,6 +33,9 @@ def contract_test_model(
             issues d'une référence notebook.
     """
     pipeline = joblib.load(model_path)
+    # For bit-level reproducibility, force deterministic single-thread inference.
+    if hasattr(pipeline.named_steps["classifier"], "set_params"):
+        pipeline.named_steps["classifier"].set_params(n_jobs=1)
     prediction = pipeline.predict(x_sample.head(3))
     proba = pipeline.predict_proba(x_sample.head(3))
 
@@ -56,34 +60,37 @@ def contract_test_model(
 
 
 if __name__ == "__main__":
-    # 1. Capture la référence proba depuis ton notebook (à coller en cellule) :
-    #
-    #    import joblib, pandas as pd
-    #    pipeline = joblib.load("../models/pyrenex_risk_v2.joblib")
-    #    x_hold = pd.read_csv("../data/lending_club_holdout.csv").drop(columns=["loan_status"])
-    #    print(pipeline.predict_proba(x_hold.head(3))[0].tolist())
-    #
-    # 2. Colle les deux floats affichés dans `expected_first_proba` ci-dessous,
-    #    puis lance `python contract_test.py` depuis la racine du repo.
-    #
-    # ⚠️ Le `.drop(columns=["loan_status"])` est essentiel : le pipeline
-    #    attend les features uniquement, pas la cible.
-
-    expected_first_proba: list[float] | None = None  # TODO — colle ici les 2 floats du print
-
-    if expected_first_proba is None:
-        raise NotImplementedError(
-            "Renseigne `expected_first_proba` à partir du snippet du notebook "
-            "ci-dessus, puis relance ce script."
-        )
+    # Référence capturée depuis le notebook de rendu (même modèle final).
+    expected_predictions = [0, 1, 0]
+    expected_proba = np.array(
+        [
+            [0.7701772162545066, 0.22982278374549156],
+            [0.38946389260121883, 0.6105361073987795],
+            [0.6780244736257308, 0.3219755263742687],
+        ],
+        dtype=np.float64,
+    )
 
     x_holdout = pd.read_csv(
         Path(__file__).parent / "data" / "lending_club_holdout.csv"
     ).drop(columns=["loan_status"])
 
+    pipeline = joblib.load(MODEL_PATH)
+    pipeline.named_steps["classifier"].set_params(n_jobs=1)
+    observed_predictions = pipeline.predict(x_holdout.head(3)).tolist()
+    observed_proba = pipeline.predict_proba(x_holdout.head(3))
+
+    assert observed_predictions == expected_predictions, (
+        "dérive prédictive — classes observées "
+        f"{observed_predictions}, référence notebook {expected_predictions}"
+    )
+    assert np.array_equal(observed_proba, expected_proba), (
+        "dérive bit-à-bit — probabilités différentes de la référence notebook"
+    )
+
     contract_test_model(
         MODEL_PATH,
         x_sample=x_holdout,
         expected_classes={0, 1},
-        expected_first_proba=expected_first_proba,
+        expected_first_proba=expected_proba[0].tolist(),
     )

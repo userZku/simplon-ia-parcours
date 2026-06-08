@@ -125,6 +125,31 @@ Mini-cours d'appui : voir [`./ressources/`](./ressources/).
 
 ---
 
+## 🔁 Reproduction (résultat retenu)
+
+Depuis `module-01/M1-B1` :
+
+```bash
+python src/train.py --config balanced
+cp models/pyrenex_risk_v2_balanced.joblib models/pyrenex_risk_v2.joblib
+cp models/pyrenex_risk_v2_balanced.json models/pyrenex_risk_v2.json
+python src/evaluate.py --model models/pyrenex_risk_v2.joblib --data data/lending_club_holdout.csv --update-meta
+python contract_test.py
+```
+
+Sur Windows PowerShell, remplacer `cp` par `Copy-Item`.
+
+Métriques holdout retenues (`pyrenex_risk_v2`):
+
+- `f1_macro`: 0.6123
+- `f1_default`: 0.4357
+- `roc_auc`: 0.7370
+- `recall_default`: 0.6455
+
+Verdict métier final : voir [verdict.md](verdict.md).
+
+---
+
 ## 🆘 Bloqué·e ?
 
 1. Relis le mini-cours correspondant à ta tâche actuelle (cf.

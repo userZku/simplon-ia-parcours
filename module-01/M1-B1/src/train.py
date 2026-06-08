@@ -190,6 +190,7 @@ def train(config_name: str, data_path: Path, output_dir: Path) -> dict:
         "sklearn_version": sklearn.__version__,
         "python_version": platform.python_version(),
         "dataset_sha256": sha256(data_path.read_bytes()).hexdigest(),
+        "metrics_holdout": None,
         "hyperparameters": params,
         "metrics_test_internal": {k: round(v, 4) for k, v in metrics.items()},
         "artifacts": {"shap_plots": shap_plot_paths},
