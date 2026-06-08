@@ -7,30 +7,26 @@
 
 ---
 
-## 🚀 Démarrage (4 commandes)
+## 🚀 Démarrage
 
 ```bash
-# 0. Clone ton repo perso fraîchement créé
-git clone git@github.com:<ton-user>/M1-B2-scoring-api-<prenom>.git
-cd M1-B2-scoring-api-<prenom>
-
-# 1. Environnement virtuel
-python -m venv .venv && source .venv/bin/activate     # Linux/macOS
-# .venv\Scripts\activate                              # Windows
-
-# 2. Dépendances
-pip install -r requirements.txt
-
-# 3. Vérification (avec ton modèle M1-B1 dans models/)
-uvicorn app.main:app --reload                          # → /health doit répondre 200
+docker build -t pyrenex-risk-api:v0.1.0 .
+docker run -d -p 8000:8000 --name pyrenex-api pyrenex-risk-api:v0.1.0
+curl http://localhost:8000/health
 ```
 
-Ensuite (autre terminal) :
+---
 
-```bash
-curl http://localhost:8000/health
-curl http://localhost:8000/info
-pytest -v                                              # → 1 test exemple passe
+## 🏗️ Schéma global (Client → API → Modèle)
+
+```mermaid
+flowchart LR
+   C[Client HTTP<br/>curl/Postman/front] -->|GET /health, GET /info, POST /predict| A[FastAPI app]
+   A --> M[Middleware Loguru<br/>request_id + latency + logs JSON]
+   M --> R[Routes FastAPI]
+   R --> P[Pipeline modèle<br/>pyrenex_risk_v2.joblib]
+   P --> R
+   R --> C
 ```
 
 ---
@@ -97,6 +93,55 @@ cp ../M1-B1-scoring-<prenom>/models/pyrenex_risk_v2.json   ./models/
 ```
 
 Le service ne démarre pas sans ces 2 fichiers.
+
+---
+
+## 🧪 Exemples curl complets
+
+```bash
+curl http://localhost:8000/health
+curl http://localhost:8000/info
+```
+
+```bash
+curl -X POST http://localhost:8000/predict \
+   -H "Content-Type: application/json" \
+   -d '{
+      "loan_amnt": 10000.0,
+      "term": "36 months",
+      "int_rate": 12.5,
+      "installment": 334.21,
+      "annual_inc": 60000.0,
+      "dti": 18.4,
+      "delinq_2yrs": 0,
+      "fico_range_low": 690,
+      "revol_util": 45.2,
+      "grade": "C",
+      "home_ownership": "RENT",
+      "verification_status": "Verified",
+      "purpose": "debt_consolidation",
+      "emp_length": "5 years"
+   }'
+```
+
+---
+
+## 🏷️ Versionning
+
+- Version servie par l'API: `GET /info` puis lire `api_version` et `model_version`.
+- Version du code: tag Git du release (exemple: `v0.1.0-api`).
+- Vérification locale du tag: `git tag --list`.
+- Vérification distante du tag: `git ls-remote --tags origin`.
+
+---
+
+## 🚀 Préparation M5
+
+1. Ajouter une CI Docker dédiée tests d'intégration (build + run + checks HTTP).
+2. Introduire un `Dockerfile.test` pour isoler les dépendances QA du runtime.
+3. Publier l'image sur registry avec tags immuables (`vX.Y.Z` + SHA commit).
+4. Ajouter scans sécurité image et dépendances (SCA + vulnérabilités).
+5. Préparer auth réelle (JWT/OIDC), rate limiting et observabilité centralisée.
 
 ---
 
